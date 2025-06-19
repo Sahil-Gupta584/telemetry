@@ -4,21 +4,42 @@ import nodemailer from "nodemailer";
 import { Contests, Problems, Users } from "./mongodb";
 import { Contest, Problem, Student } from "./schema";
 
-export const CF_API_BASE_URL = "https://codeforces.com/api";
+const CF_API_BASE_URL = "https://codeforces.com/api";
 
 export async function syncStudentData(s: Student) {
-  // Fetch and update student rating info
+  // update student rating info
   const infoRes = await axios.get(
     `${CF_API_BASE_URL}/user.info?handles=${s.cf_handle}`
   );
   const studentInfo = infoRes.data?.result?.[0];
-  await Users.updateOne(
+  const user = await Users.findByIdAndUpdate(
     { _id: s._id },
     {
       maxRating: studentInfo.maxRating,
       currentRating: studentInfo.rating,
-    }
+    },
+    { new: true }
   );
+  if (user.isReminderEnabled) {
+    const res = await axios.get(
+      `${CF_API_BASE_URL}/user.status?handle=${s.cf_handle}&count=1`
+    );
+    const latest = res.data?.result?.[0];
+
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const hasNoRecentSubmission =
+      !latest || latest.creationTimeSeconds * 1000 < sevenDaysAgo;
+
+    if (hasNoRecentSubmission) {
+      await sendReminderEmail(s.email, s.name);
+
+      // Increment reminderEmailCount by 1
+      await Users.updateOne(
+        { _id: s._id },
+        { $inc: { reminderEmailCount: 1 } }
+      );
+    }
+  }
   console.log("updated user info");
 
   const newContests: Contest[] = [];
@@ -59,7 +80,6 @@ export async function syncStudentData(s: Student) {
       `${CF_API_BASE_URL}/user.status?handle=${s.cf_handle}&from=${problemStart}&count=${problemBatchSize}`
     );
     const batch = res.data?.result as Problem[];
-    console.log({ cbatch: problemStart });
 
     if (!batch || batch.length === 0) break;
 

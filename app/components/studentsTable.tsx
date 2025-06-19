@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { errorHandler, getRatingColor } from "../utils";
 import { DeleteStudentModel } from "./modals/deleteStudent";
+import { EmailReminderModel } from "./modals/emailReminder";
 import { StudentFormModel } from "./modals/studentForm";
 
 export const StudentTable = () => {
@@ -76,7 +77,12 @@ export const StudentTable = () => {
   ) => {
     try {
       const formData = await studentSchema.parseAsync(formDataRaw);
-      const res = await axios.post("/api/student/create", formData);
+
+      const res = await axios.post("/api/student/create", {
+        ...formData,
+        reminderEmailCount: 0,
+        isReminderEnabled: true,
+      });
       if (!res.data.ok) {
         addToast({
           color: "danger",
@@ -100,9 +106,7 @@ export const StudentTable = () => {
     onClose: () => void
   ) => {
     try {
-      const formData = await studentSchema.parseAsync(formDataRaw);
-
-      const res = await axios.post("/api/student/update", formData);
+      const res = await axios.post("/api/student/update", formDataRaw);
       if (!res.data.ok) {
         addToast({
           color: "danger",
@@ -318,6 +322,16 @@ export const StudentTable = () => {
                       name={student.name}
                       userId={student._id}
                       refetch={refetch}
+                    />
+                    <EmailReminderModel
+                      email={student.email}
+                      name={student.name}
+                      refetch={refetch}
+                      handle={student.cf_handle}
+                      isEnabled={student.isReminderEnabled}
+                      reminderEmailCount={student.reminderEmailCount}
+                      onSubmit={handleUpdateStudent}
+                      userId={student._id}
                     />
                   </div>
                 </td>

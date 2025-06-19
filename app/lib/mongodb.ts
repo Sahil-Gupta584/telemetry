@@ -30,6 +30,8 @@ const UserSchema = new mongoose.Schema(
         type: mongoose.Types.ObjectId,
       },
     ],
+    reminderEmailCount: { type: Number, default: 0 },
+    isReminderEnabled: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

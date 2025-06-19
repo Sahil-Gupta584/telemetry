@@ -65,4 +65,7 @@ export type Student = z.infer<typeof studentSchema> & {
   _id: string;
   contests?: Contest[];
   problems?: Problem[];
+  reminderEmailCount: number;
+  isReminderEnabled: boolean;
+  updatedAt: Date;
 };
