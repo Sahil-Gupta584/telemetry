@@ -1,4 +1,4 @@
-import { connectDb, Problems, Users } from "@/app/lib/mongodb";
+import { connectDb, Users } from "@/app/lib/mongodb";
 import console from "console";
 import { ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,13 +14,10 @@ export async function GET(req: NextRequest) {
 
     let student = await Users.findById({
       _id: new ObjectId(studentId),
-    }).populate("contests");
-    const userProblems = await Problems.find({
-      "author.members": { $in: [studentId] },
-    });
-    console.log("l", userProblems.length);
+    })
+      .populate("contests")
+      .populate("problems");
 
-    student.problems = student.problems;
     if (!student) throw new Error("Student Not Found");
 
     return NextResponse.json({ ok: true, student });
