@@ -58,6 +58,7 @@ export default function StudentProfile({ params }: StudentProfileProps) {
       }
     },
   });
+  console.log({ student });
 
   const contestData = useMemo(() => {
     const cutoffDate = new Date();

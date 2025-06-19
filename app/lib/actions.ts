@@ -80,6 +80,7 @@ export async function syncStudentData(s: Student) {
       `${CF_API_BASE_URL}/user.status?handle=${s.cf_handle}&from=${problemStart}&count=${problemBatchSize}`
     );
     const batch = res.data?.result as Problem[];
+    console.log({ batch });
 
     if (!batch || batch.length === 0) break;
 
@@ -107,6 +108,10 @@ export async function syncStudentData(s: Student) {
           await Problems.updateOne(
             { id: p.id },
             { $push: { "author.members": s._id } }
+          );
+          await Users.updateOne(
+            { _id: s._id },
+            { $push: { problems: existing._id } }
           );
         }
       }
